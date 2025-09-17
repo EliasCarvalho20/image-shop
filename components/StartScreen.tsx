@@ -4,17 +4,39 @@
 */
 
 import React, { useState } from 'react';
-import { UploadIcon, MagicWandIcon, PaletteIcon, SunIcon } from './icons';
+import { UploadIcon, MagicWandIcon, PaletteIcon, SunIcon, CollectionIcon } from './icons';
 
 interface StartScreenProps {
-  onFileSelect: (files: FileList | null) => void;
+  onSingleFileSelect: (file: File) => void;
+  onMultipleFileSelect: (files: FileList) => void;
 }
 
-const StartScreen: React.FC<StartScreenProps> = ({ onFileSelect }) => {
+const StartScreen: React.FC<StartScreenProps> = ({ onSingleFileSelect, onMultipleFileSelect }) => {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFileSelect(e.target.files);
+  const handleSingleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        onSingleFileSelect(e.target.files[0]);
+    }
+  };
+  
+  const handleMultipleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+        onMultipleFileSelect(e.target.files);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+        if (files.length === 1) {
+            onSingleFileSelect(files[0]);
+        } else {
+            onMultipleFileSelect(files);
+        }
+    }
   };
 
   return (
@@ -22,11 +44,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onFileSelect }) => {
       className={`w-full max-w-5xl mx-auto text-center p-8 transition-all duration-300 rounded-2xl border-2 ${isDraggingOver ? 'bg-blue-500/10 border-dashed border-blue-400' : 'border-transparent'}`}
       onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
       onDragLeave={() => setIsDraggingOver(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setIsDraggingOver(false);
-        onFileSelect(e.dataTransfer.files);
-      }}
+      onDrop={handleDrop}
     >
       <div className="flex flex-col items-center gap-6 animate-fade-in">
         <h1 className="text-5xl font-extrabold tracking-tight text-gray-100 sm:text-6xl md:text-7xl">
@@ -36,14 +54,20 @@ const StartScreen: React.FC<StartScreenProps> = ({ onFileSelect }) => {
           Retouch photos, apply creative filters, or make professional adjustments using simple text prompts. No complex tools needed.
         </p>
 
-        <div className="mt-6 flex flex-col items-center gap-4">
-            <label htmlFor="image-upload-start" className="relative inline-flex items-center justify-center px-10 py-5 text-xl font-bold text-white bg-blue-600 rounded-full cursor-pointer group hover:bg-blue-500 transition-colors">
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <label htmlFor="single-image-upload" className="relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-blue-600 rounded-full cursor-pointer group hover:bg-blue-500 transition-colors">
                 <UploadIcon className="w-6 h-6 mr-3 transition-transform duration-500 ease-in-out group-hover:rotate-[360deg] group-hover:scale-110" />
-                Upload an Image
+                Upload Single Image
             </label>
-            <input id="image-upload-start" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-            <p className="text-sm text-gray-500">or drag and drop a file</p>
+            <input id="single-image-upload" type="file" className="hidden" accept="image/*" onChange={handleSingleFileChange} />
+            
+            <label htmlFor="multiple-image-upload" className="relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-gray-200 bg-white/10 border border-white/20 rounded-full cursor-pointer group hover:bg-white/20 transition-colors">
+                <CollectionIcon className="w-6 h-6 mr-3 transition-transform duration-500 ease-in-out group-hover:scale-110" />
+                Process Multiple Images
+            </label>
+            <input id="multiple-image-upload" type="file" className="hidden" accept="image/*" multiple onChange={handleMultipleFileChange} />
         </div>
+        <p className="text-sm text-gray-500">or drag and drop a file (or files)</p>
 
         <div className="mt-16 w-full">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

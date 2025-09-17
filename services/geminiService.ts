@@ -5,6 +5,42 @@
 
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
+/**
+ * Awaits a promise and retries it on failure with exponential backoff.
+ * This is useful for handling transient network errors or temporary server issues (like 500 errors).
+ * @param fn The async function to execute.
+ * @param retries Number of retries.
+ * @param initialDelay Initial delay in ms.
+ * @returns The result of the async function.
+ */
+const withRetry = async <T>(
+    fn: () => Promise<T>, 
+    retries = 3, 
+    initialDelay = 1000
+): Promise<T> => {
+    let lastError: Error | undefined;
+    let delay = initialDelay;
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await fn();
+        } catch (error) {
+            lastError = error as Error;
+            // Don't retry on client-side errors that won't resolve on their own.
+            // This is a basic check; a more sophisticated check might inspect a status code if available.
+            if (error instanceof Error && error.message.includes("blocked")) {
+                console.error("Request blocked, not retrying.", error);
+                throw error;
+            }
+            console.warn(`API call attempt ${i + 1} of ${retries} failed. Retrying in ${delay}ms...`, error);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2; // Exponential backoff
+        }
+    }
+    console.error("All retry attempts failed.");
+    throw lastError ?? new Error("All retry attempts failed.");
+};
+
+
 // Helper function to convert a File object to a Gemini API Part
 const fileToPart = async (file: File): Promise<{ inlineData: { mimeType: string; data: string; } }> => {
     const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -22,6 +58,23 @@ const fileToPart = async (file: File): Promise<{ inlineData: { mimeType: string;
     const mimeType = mimeMatch[1];
     const data = arr[1];
     return { inlineData: { mimeType, data } };
+};
+
+// Helper to get image dimensions from a File object
+const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+        const imageUrl = URL.createObjectURL(file);
+        const image = new Image();
+        image.src = imageUrl;
+        image.onload = () => {
+            URL.revokeObjectURL(imageUrl);
+            resolve({ width: image.naturalWidth, height: image.naturalHeight });
+        };
+        image.onerror = (err) => {
+            URL.revokeObjectURL(imageUrl);
+            reject(err);
+        };
+    });
 };
 
 const handleApiResponse = (
@@ -95,10 +148,12 @@ Output: Return ONLY the final edited image. Do not return text.`;
     const textPart = { text: prompt };
 
     console.log('Sending image and prompt to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const apiCall = () => ai.models.generateContent({
         model: 'gemini-2.5-flash-image-preview',
         contents: { parts: [originalImagePart, textPart] },
     });
+    
+    const response: GenerateContentResponse = await withRetry(apiCall);
     console.log('Received response from model.', response);
 
     return handleApiResponse(response, 'edit');
@@ -129,10 +184,12 @@ Output: Return ONLY the final filtered image. Do not return text.`;
     const textPart = { text: prompt };
 
     console.log('Sending image and filter prompt to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const apiCall = () => ai.models.generateContent({
         model: 'gemini-2.5-flash-image-preview',
         contents: { parts: [originalImagePart, textPart] },
     });
+
+    const response: GenerateContentResponse = await withRetry(apiCall);
     console.log('Received response from model for filter.', response);
     
     return handleApiResponse(response, 'filter');
@@ -167,13 +224,54 @@ Output: Return ONLY the final adjusted image. Do not return text.`;
     const textPart = { text: prompt };
 
     console.log('Sending image and adjustment prompt to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const apiCall = () => ai.models.generateContent({
         model: 'gemini-2.5-flash-image-preview',
         contents: { parts: [originalImagePart, textPart] },
     });
+
+    const response: GenerateContentResponse = await withRetry(apiCall);
     console.log('Received response from model for adjustment.', response);
     
     return handleApiResponse(response, 'adjustment');
+};
+
+/**
+ * Generates an auto-enhanced image using generative AI.
+ * @param originalImage The original image file.
+ * @returns A promise that resolves to the data URL of the enhanced image.
+ */
+export const generateAutoEnhancedImage = async (
+    originalImage: File,
+): Promise<string> => {
+    console.log(`Starting auto-enhance generation...`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    
+    const originalImagePart = await fileToPart(originalImage);
+    const prompt = `You are an expert photo editor AI. Your task is to automatically enhance the provided image.
+
+Instructions:
+- Analyze the image and apply professional-grade adjustments to improve its overall quality.
+- Subtly improve brightness, contrast, saturation, and sharpness.
+- Ensure the result is photorealistic and natural-looking.
+- Do NOT change the content, composition, or crop of the image. Just enhance what is already there.
+
+Safety & Ethics Policy:
+- Enhancements may subtly shift colors, but you MUST ensure they do not alter a person's fundamental race or ethnicity.
+- You MUST REFUSE any request that explicitly asks to change a person's race.
+
+Output: Return ONLY the final enhanced image. Do not return text.`;
+    const textPart = { text: prompt };
+
+    console.log('Sending image for auto-enhancement...');
+    const apiCall = () => ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: { parts: [originalImagePart, textPart] },
+    });
+    
+    const response: GenerateContentResponse = await withRetry(apiCall);
+    console.log('Received response from model for auto-enhance.', response);
+    
+    return handleApiResponse(response, 'auto-enhance');
 };
 
 
@@ -227,11 +325,97 @@ Return ONLY the final, fully filled image. Do not return text.`;
     const textPart = { text: prompt };
     
     console.log('Sending composite image and expand prompt to the model...');
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const apiCall = () => ai.models.generateContent({
         model: 'gemini-2.5-flash-image-preview',
         contents: { parts: [compositeImagePart, textPart] },
     });
+    
+    const response: GenerateContentResponse = await withRetry(apiCall);
     console.log('Received response from model for expansion.', response);
     
     return handleApiResponse(response, 'expansion');
+};
+
+/**
+ * Generates an upscaled image using generative AI.
+ * @param originalImage The original image file.
+ * @param scaleFactor The factor by which to upscale the image (e.g., 2 for 2x).
+ * @returns A promise that resolves to the data URL of the upscaled image.
+ */
+export const generateUpscaledImage = async (
+    originalImage: File,
+    scaleFactor: number,
+): Promise<string> => {
+    console.log(`Starting AI upscale by ${scaleFactor}x`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    
+    const { width: originalWidth, height: originalHeight } = await getImageDimensions(originalImage);
+    const targetWidth = originalWidth * scaleFactor;
+    const targetHeight = originalHeight * scaleFactor;
+
+    const originalImagePart = await fileToPart(originalImage);
+    const prompt = `You are an expert in image processing and AI upscaling. Your task is to increase the resolution of the provided image by a factor of ${scaleFactor}.
+The final output image MUST be exactly ${targetWidth}x${targetHeight} pixels.
+
+Your goal is to intelligently add realistic details, enhance textures, and sharpen edges without introducing artifacts or unnatural patterns. The upscaled image should be a high-fidelity, photorealistic version of the original.
+
+Output: Return ONLY the final upscaled image. Do not return text.`;
+    const textPart = { text: prompt };
+
+    console.log(`Sending image to model for ${scaleFactor}x upscale...`);
+    const apiCall = () => ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: { parts: [originalImagePart, textPart] },
+    });
+    
+    const response: GenerateContentResponse = await withRetry(apiCall);
+    console.log('Received response from model for upscale.', response);
+    
+    return handleApiResponse(response, 'upscale');
+};
+
+
+/**
+ * Generates a composed image by combining a base image with a complement image based on a prompt.
+ * @param baseImage The base image file.
+ * @param complementImage The image file to add to the base image.
+ * @param userPrompt The text prompt describing how to combine the images.
+ * @returns A promise that resolves to the data URL of the composed image.
+ */
+export const generateComposedImage = async (
+    baseImage: File,
+    complementImage: File,
+    userPrompt: string,
+): Promise<string> => {
+    console.log(`Starting image composition: ${userPrompt}`);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+
+    const baseImagePart = await fileToPart(baseImage);
+    const complementImagePart = await fileToPart(complementImage);
+
+    const prompt = `You are an expert photo editor AI. Your task is to seamlessly combine two images.
+- The first image is the base scene.
+- The second image is the object or element to be added to the base scene.
+
+User's instruction: "${userPrompt}"
+
+Instructions:
+- Analyze both images and the user's prompt.
+- Integrate the second image into the first image in a photorealistic way that matches the lighting, perspective, and style of the base scene.
+- The result must be a single, coherent image.
+
+Output: Return ONLY the final composed image. Do not return text.`;
+
+    const textPart = { text: prompt };
+
+    console.log('Sending images and composition prompt to the model...');
+    const apiCall = () => ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: { parts: [baseImagePart, complementImagePart, textPart] },
+    });
+    
+    const response: GenerateContentResponse = await withRetry(apiCall);
+    console.log('Received response from model for composition.', response);
+
+    return handleApiResponse(response, 'composition');
 };

@@ -4,13 +4,16 @@
 */
 
 import React, { useState } from 'react';
+import { CollectionIcon } from './icons';
 
 interface AdjustmentPanelProps {
   onApplyAdjustment: (prompt: string) => void;
+  onApplyToAll?: (prompt: string) => void;
   isLoading: boolean;
+  batchMode: boolean;
 }
 
-const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, isLoading }) => {
+const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, onApplyToAll, isLoading, batchMode }) => {
   const [selectedPresetPrompt, setSelectedPresetPrompt] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
 
@@ -38,6 +41,12 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, is
       onApplyAdjustment(activePrompt);
     }
   };
+  
+  const handleApplyToAll = () => {
+    if (activePrompt && onApplyToAll) {
+      onApplyToAll(activePrompt);
+    }
+  }
 
   return (
     <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex flex-col gap-4 animate-fade-in backdrop-blur-sm">
@@ -66,14 +75,24 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, is
       />
 
       {activePrompt && (
-        <div className="animate-fade-in flex flex-col gap-4 pt-2">
+        <div className="animate-fade-in flex flex-col sm:flex-row gap-2 pt-2">
             <button
                 onClick={handleApply}
                 className="w-full bg-gradient-to-br from-blue-600 to-blue-500 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none"
                 disabled={isLoading || !activePrompt.trim()}
             >
-                Apply Adjustment
+                Apply to Current
             </button>
+            {batchMode && onApplyToAll && (
+              <button
+                onClick={handleApplyToAll}
+                className="w-full bg-gradient-to-br from-green-600 to-green-500 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-green-500/20 hover:shadow-xl hover:shadow-green-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-green-800 disabled:to-green-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+                disabled={isLoading || !activePrompt.trim()}
+              >
+                <CollectionIcon className="w-5 h-5" />
+                Apply to All
+              </button>
+            )}
         </div>
       )}
     </div>
