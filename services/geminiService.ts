@@ -380,12 +380,14 @@ Output: Return ONLY the final upscaled image. Do not return text.`;
  * @param baseImage The base image file.
  * @param complementImage The image file to add to the base image.
  * @param userPrompt The text prompt describing how to combine the images.
+ * @param hotspot The optional {x, y} coordinates on the base image for placement.
  * @returns A promise that resolves to the data URL of the composed image.
  */
 export const generateComposedImage = async (
     baseImage: File,
     complementImage: File,
     userPrompt: string,
+    hotspot: { x: number, y: number } | null,
 ): Promise<string> => {
     console.log(`Starting image composition: ${userPrompt}`);
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
@@ -393,11 +395,17 @@ export const generateComposedImage = async (
     const baseImagePart = await fileToPart(baseImage);
     const complementImagePart = await fileToPart(complementImage);
 
+    const locationInstruction = hotspot
+        ? `Place the second image with its center near the specified coordinates (x: ${hotspot.x}, y: ${hotspot.y}) on the base image.`
+        : `Intelligently determine the best placement for the second image based on the user's instruction.`;
+
     const prompt = `You are an expert photo editor AI. Your task is to seamlessly combine two images.
 - The first image is the base scene.
 - The second image is the object or element to be added to the base scene.
 
 User's instruction: "${userPrompt}"
+
+Placement: ${locationInstruction}
 
 Instructions:
 - Analyze both images and the user's prompt.

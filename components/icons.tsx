@@ -143,3 +143,21 @@ export const LayersIcon: React.FC<{ className?: string }> = ({ className }) => (
       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 14.375v3.375A2.25 2.25 0 006 20.25h12a2.25 2.25 0 002.25-2.25v-3.375" />
     </svg>
 );
+
+export const ChevronDownIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+    </svg>
+);
+
+export const ChevronUpIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+    </svg>
+);
+
+export const HandPanIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75V4.5a2.25 2.25 0 00-2.25-2.25H9A2.25 2.25 0 006.75 4.5v8.25a2.25 2.25 0 002.25 2.25h2.25m4.5 3.75v-3.75m0 0c0-1.24-.97-2.25-2.17-2.25H18a2.25 2.25 0 012.25 2.25v4.5A2.25 2.25 0 0118 21.75h-2.25a2.25 2.25 0 01-2.25-2.25v-1.5Z" />
+    </svg>
+);

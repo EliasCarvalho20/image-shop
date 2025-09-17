@@ -179,7 +179,7 @@ const AdvancedPanel: React.FC<AdvancedPanelProps> = ({ onApplyAdjustment, onAppl
   }
 
   return (
-    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex flex-col gap-4 animate-fade-in backdrop-blur-sm">
+    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-6 flex flex-col gap-5 animate-fade-in backdrop-blur-sm">
       <div className="p-1 bg-gray-900/50 rounded-lg flex w-full">
         {toolConfig.map(tool => (
              <button
@@ -193,10 +193,10 @@ const AdvancedPanel: React.FC<AdvancedPanelProps> = ({ onApplyAdjustment, onAppl
         ))}
       </div>
       
-      <div className="p-4 min-h-[200px]">
+      <div className="p-5 min-h-[200px]">
           {renderToolUI()}
       </div>
-        <div className="animate-fade-in flex flex-col sm:flex-row gap-2 pt-2">
+        <div className="animate-fade-in flex flex-col sm:flex-row gap-3 pt-2">
             <button
                 onClick={handleApply}
                 disabled={isApplyDisabled()}

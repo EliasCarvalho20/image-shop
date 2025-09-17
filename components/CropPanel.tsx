@@ -29,7 +29,7 @@ const CropPanel: React.FC<CropPanelProps> = ({ onApplyCrop, onSetAspect, isLoadi
   ];
 
   return (
-    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex flex-col items-center gap-4 animate-fade-in backdrop-blur-sm">
+    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-6 flex flex-col items-center gap-5 animate-fade-in backdrop-blur-sm">
       <h3 className="text-lg font-semibold text-gray-300">Crop Image</h3>
       <p className="text-sm text-gray-400 -mt-2">Click and drag on the image to select a crop area.</p>
       

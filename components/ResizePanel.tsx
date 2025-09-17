@@ -76,7 +76,7 @@ const ResizePanel: React.FC<ResizePanelProps> = ({
   const isExpandInvalid = width < imageWidth || height < imageHeight;
 
   return (
-    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex flex-col gap-4 animate-fade-in backdrop-blur-sm">
+    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-6 flex flex-col gap-5 animate-fade-in backdrop-blur-sm">
       <div className="p-1 bg-gray-900/50 rounded-lg flex w-full">
         <button
           onClick={() => handleModeChange('scale')}
@@ -103,7 +103,7 @@ const ResizePanel: React.FC<ResizePanelProps> = ({
       
       {mode !== 'upscale' && (
         <div className="animate-fade-in">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-5">
             <div className="flex-1 w-full">
                 <label htmlFor="width" className="block text-sm font-medium text-gray-400 mb-1">Width</label>
                 <div className="relative">

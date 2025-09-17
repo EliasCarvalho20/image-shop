@@ -22,6 +22,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onApplyFilter, onApplyToAll, 
     { name: 'Anime', prompt: 'Give the image a vibrant Japanese anime style, with bold outlines, cel-shading, and saturated colors.' },
     { name: 'Lomo', prompt: 'Apply a Lomography-style cross-processing film effect with high-contrast, oversaturated colors, and dark vignetting.' },
     { name: 'Glitch', prompt: 'Transform the image into a futuristic holographic projection with digital glitch effects and chromatic aberration.' },
+    { name: 'Noir', prompt: 'Convert the image to a high-contrast, dramatic black and white noir style, with deep shadows and bright highlights.' },
+    { name: 'Infrared', prompt: 'Simulate an infrared photo effect, with foliage turning white or pink and skies becoming dark and dramatic.' },
+    { name: 'Vintage', prompt: 'Apply a 1970s vintage photo effect with faded colors, a warm yellow tint, and a slight grain.' },
+    { name: 'Pop Art', prompt: 'Transform the image into a vibrant pop art style, like Andy Warhol, with bold, saturated, and unexpected colors.' },
   ];
   
   const activePrompt = selectedPresetPrompt || customPrompt;
@@ -49,10 +53,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onApplyFilter, onApplyToAll, 
   }
 
   return (
-    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex flex-col gap-4 animate-fade-in backdrop-blur-sm">
+    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-6 flex flex-col gap-5 animate-fade-in backdrop-blur-sm">
       <h3 className="text-lg font-semibold text-center text-gray-300">Apply a Filter</h3>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {presets.map(preset => (
           <button
             key={preset.name}
@@ -75,7 +79,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onApplyFilter, onApplyToAll, 
       />
       
       {activePrompt && (
-        <div className="animate-fade-in flex flex-col sm:flex-row gap-2 pt-2">
+        <div className="animate-fade-in flex flex-col sm:flex-row gap-3 pt-2">
           <button
             onClick={handleApply}
             className="w-full bg-gradient-to-br from-blue-600 to-blue-500 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none"

@@ -9,9 +9,10 @@ import { UploadIcon, LayersIcon } from './icons';
 interface ComposePanelProps {
   onApplyCompose: (complementImage: File, prompt: string) => void;
   isLoading: boolean;
+  hotspot: { x: number, y: number } | null;
 }
 
-const ComposePanel: React.FC<ComposePanelProps> = ({ onApplyCompose, isLoading }) => {
+const ComposePanel: React.FC<ComposePanelProps> = ({ onApplyCompose, isLoading, hotspot }) => {
   const [complementImage, setComplementImage] = useState<File | null>(null);
   const [complementImageUrl, setComplementImageUrl] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
@@ -49,11 +50,11 @@ const ComposePanel: React.FC<ComposePanelProps> = ({ onApplyCompose, isLoading }
   };
 
   return (
-    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex flex-col gap-4 animate-fade-in backdrop-blur-sm">
+    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-6 flex flex-col gap-5 animate-fade-in backdrop-blur-sm">
       <h3 className="text-lg font-semibold text-center text-gray-300">Compose Images</h3>
-      <p className="text-sm text-gray-400 text-center -mt-2">Upload a second image to add it to your main image.</p>
+      <p className="text-sm text-gray-400 text-center -mt-2">Upload a second image, click a point on your main image, and describe how to combine them.</p>
       
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1">
           <label htmlFor="complement-upload" className="block text-sm font-medium text-gray-400 mb-2">Complement Image</label>
           {complementImageUrl ? (
@@ -83,13 +84,20 @@ const ComposePanel: React.FC<ComposePanelProps> = ({ onApplyCompose, isLoading }
         </div>
         
         <div className="flex-1 flex flex-col gap-2">
-          <label htmlFor="compose-prompt" className="block text-sm font-medium text-gray-400">Instructions</label>
+           <div className="flex justify-between items-center">
+              <label htmlFor="compose-prompt" className="block text-sm font-medium text-gray-400">Instructions</label>
+              {hotspot && (
+                  <span className="text-xs font-mono text-blue-300 bg-blue-500/10 px-2 py-1 rounded-full animate-fade-in">
+                      Pinpoint: ({hotspot.x}, {hotspot.y})
+                  </span>
+              )}
+          </div>
           <textarea
             id="compose-prompt"
             rows={4}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="e.g., 'add the cat onto the sofa in the living room'"
+            placeholder={hotspot ? "e.g., 'place the cat here, facing left'" : "First click a point on the main image"}
             className="flex-grow bg-gray-800 border border-gray-600 text-gray-200 rounded-lg p-4 focus:ring-2 focus:ring-blue-500 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60 text-base"
             disabled={isLoading || !complementImage}
           />

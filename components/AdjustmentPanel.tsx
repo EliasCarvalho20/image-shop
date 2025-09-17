@@ -13,9 +13,45 @@ interface AdjustmentPanelProps {
   batchMode: boolean;
 }
 
+// Reusable slider component
+const ControlSlider: React.FC<{
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  onReset?: () => void;
+  min?: number;
+  max?: number;
+  isLoading: boolean;
+}> = ({ label, value, onChange, onReset, min = -100, max = 100, isLoading }) => (
+    <div className="flex flex-col gap-2">
+        <div className="flex justify-between items-center">
+            <label className="text-sm font-medium text-gray-400">{label}</label>
+            <span
+                onClick={onReset}
+                className={`text-sm font-mono bg-gray-900/50 text-gray-200 px-2 py-1 rounded-md transition-colors ${onReset ? 'cursor-pointer hover:bg-gray-700' : ''}`}
+                title={onReset ? 'Click to reset' : ''}
+            >
+                {value > 0 ? `+${value}` : value}
+            </span>
+        </div>
+        <input
+            type="range"
+            min={min}
+            max={max}
+            value={value}
+            onChange={(e) => onChange(parseInt(e.target.value, 10))}
+            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg accent-blue-500 disabled:opacity-50"
+            disabled={isLoading}
+        />
+    </div>
+);
+
+
 const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, onApplyToAll, isLoading, batchMode }) => {
   const [selectedPresetPrompt, setSelectedPresetPrompt] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
+  const [brightness, setBrightness] = useState(0);
+  const [contrast, setContrast] = useState(0);
 
   const presets = [
     { name: 'Blur Background', prompt: 'Apply a realistic depth-of-field effect, making the background blurry while keeping the main subject in sharp focus.' },
@@ -24,17 +60,41 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, on
     { name: 'Studio Light', prompt: 'Add dramatic, professional studio lighting to the main subject.' },
   ];
 
-  const activePrompt = selectedPresetPrompt || customPrompt;
+  const resetSliders = () => {
+    setBrightness(0);
+    setContrast(0);
+  };
+
+  const handleSliderChange = (type: 'brightness' | 'contrast', value: number) => {
+      setSelectedPresetPrompt(null);
+      setCustomPrompt('');
+      if (type === 'brightness') setBrightness(value);
+      if (type === 'contrast') setContrast(value);
+  };
 
   const handlePresetClick = (prompt: string) => {
     setSelectedPresetPrompt(prompt);
     setCustomPrompt('');
+    resetSliders();
   };
 
   const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCustomPrompt(e.target.value);
     setSelectedPresetPrompt(null);
+    resetSliders();
   };
+  
+  let sliderPrompt = '';
+  const hasSliderValues = brightness !== 0 || contrast !== 0;
+
+  if (hasSliderValues) {
+      const parts = [];
+      if (brightness !== 0) parts.push(`adjust brightness by ${brightness}`);
+      if (contrast !== 0) parts.push(`adjust contrast by ${contrast}`);
+      sliderPrompt = `Perform a photorealistic adjustment: ${parts.join(' and ')}.`;
+  }
+
+  const activePrompt = selectedPresetPrompt || customPrompt || sliderPrompt;
 
   const handleApply = () => {
     if (activePrompt) {
@@ -49,8 +109,19 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, on
   }
 
   return (
-    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex flex-col gap-4 animate-fade-in backdrop-blur-sm">
+    <div className="w-full bg-gray-800/50 border border-gray-700 rounded-lg p-6 flex flex-col gap-5 animate-fade-in backdrop-blur-sm">
       <h3 className="text-lg font-semibold text-center text-gray-300">Apply a Professional Adjustment</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-gray-900/30 rounded-lg">
+        <ControlSlider label="Brightness" value={brightness} onChange={v => handleSliderChange('brightness', v)} onReset={() => handleSliderChange('brightness', 0)} isLoading={isLoading} />
+        <ControlSlider label="Contrast" value={contrast} onChange={v => handleSliderChange('contrast', v)} onReset={() => handleSliderChange('contrast', 0)} isLoading={isLoading} />
+      </div>
+
+      <div className="flex items-center gap-4 my-2">
+        <div className="flex-grow border-t border-gray-600"></div>
+        <span className="text-sm font-semibold text-gray-400">OR</span>
+        <div className="flex-grow border-t border-gray-600"></div>
+      </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {presets.map(preset => (
@@ -75,7 +146,7 @@ const AdjustmentPanel: React.FC<AdjustmentPanelProps> = ({ onApplyAdjustment, on
       />
 
       {activePrompt && (
-        <div className="animate-fade-in flex flex-col sm:flex-row gap-2 pt-2">
+        <div className="animate-fade-in flex flex-col sm:flex-row gap-3 pt-2">
             <button
                 onClick={handleApply}
                 className="w-full bg-gradient-to-br from-blue-600 to-blue-500 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner text-base disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none"
